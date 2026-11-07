@@ -14,6 +14,9 @@ function switchTab(tab){
   document.querySelectorAll('[data-tab]').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));
   $('currentTab').textContent=tab[0].toUpperCase()+tab.slice(1);location.hash=tab;
   refresh();
+  if(tab==="campaigns" && typeof window.reachDemoApi==="function") {
+    setTimeout(()=>$("previewBtn").click(),250); // simulated opt-in previews only
+  }
 }
 async function refresh(){
   try{

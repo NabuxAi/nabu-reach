@@ -1,0 +1,34 @@
+'use strict';
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const sandbox = {window:{},TextDecoder,Date,Error};
+vm.runInNewContext(fs.readFileSync('demo/mock.js','utf8'),sandbox);
+const api=sandbox.window.reachDemoApi;
+const post=(path,obj)=>api(path,{method:'POST',body:JSON.stringify(obj)});
+(async () => {
+  const summary=await api('/api/summary');
+  assert.equal(summary.accounts,3);
+  assert.equal(summary.contacts,12);
+  assert.equal(summary.opted_in,10);
+  assert.equal(summary.opted_out,2);
+  const preview=await post('/api/campaigns/preview',{message:'Hello {{name}}'});
+  assert.equal(preview.eligible,10);
+  assert.equal(preview.examples.length,5);
+  assert.match(preview.examples[0].message,/Amira/);
+  await post('/api/contacts/opt-out',{phone:'+15550100100'});
+  assert.equal((await api('/api/summary')).opted_in,9);
+  const csv='phone,name,consent,consent_source,consent_at\n+15550100100,Amira,yes,signup,2026-01-01T12:00:00Z\n+1555010999,Test,yes,signup,2026-01-01T12:00:00Z';
+  const imported=await api('/api/contacts/import',{method:'POST',body:csv});
+  assert.equal(imported.imported,1);
+  assert.equal(imported.skipped,1);
+  assert.equal((await api('/api/summary')).opted_in,10);
+  const account=await post('/api/accounts',{label:'Mock Partner',provider:'mock'});
+  assert.equal(account.status,'mock_ready');
+  await post('/api/campaigns',{name:'Demo draft',account_id:account.id,message:'Hi {{name}}'});
+  assert.equal((await api('/api/summary')).drafts,3);
+  let failed=false;
+  try{await post('/api/campaigns/preview',{message:'{{secret}}'});}catch(_){failed=true;}
+  assert.equal(failed,true);
+  console.log('Mock API checks passed: 14 assertions, no network sends');
+})().catch(e=>{console.error(e);process.exit(1)});

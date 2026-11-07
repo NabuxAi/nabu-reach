@@ -1,122 +1,180 @@
-# Nabu Reach — WhatsApp Campaign Studio (MVP)
+<div align="center">
 
-**Free Core Forever.** Local-first, dependency-free campaign drafting and consent-ledger management for WhatsApp business messaging. This is a working **draft-only proof of concept**, not a live-sending tool.
+# ◢ NABU REACH
 
-![Status: draft-only](https://img.shields.io/badge/messaging-draft--only-blue)
+### WhatsApp Campaign Studio — every message, with intention.
 
-## What works today
+**A beautiful, self-hostable foundation for consent-first outreach, account organization, campaign drafts, and safe previews.**
 
-- Responsive dark-blue/cyan campaign dashboard with accounts, contacts, and drafts.
-- Multiple account records: `mock` is available; `meta_cloud`, `gowa`, and `evolution` are **setup placeholders**, not implemented connections.
-- CSV import with explicit opt-in evidence (`consent_source` and `consent_at`), validation, and row-level errors.
-- Opt-outs cannot be undone by subsequent CSV imports.
-- Message composition and `{{name}}` / `{{phone}}` previews for opted-in contacts only.
-- Draft persistence with SQLite and basic audit events. A hard cap of 50 preview recipients applies.
-- No live send endpoint, background queue, or provider credentials; the UI cannot send WhatsApp messages.
-- No external Python packages; unit/HTTP smoke tests run with the standard library.
+[![Free Core Forever](https://img.shields.io/badge/FREE%20CORE-FOREVER-16a085?style=for-the-badge)](LICENSE)
+[![MIT License](https://img.shields.io/badge/LICENSE-MIT-38bdf8?style=for-the-badge)](LICENSE)
+[![Demo: No Live Sending](https://img.shields.io/badge/DEMO-NO%20LIVE%20SENDING-314158?style=for-the-badge)](docs/SECURITY.md)
+
+**[Live interactive demo](https://reach.nabuxai.com)** · [Quick start](#quick-start) · [Architecture](#architecture) · [Roadmap](#roadmap)
+
+</div>
+
+> [!IMPORTANT]
+> **This release is a draft-only proof of concept.** The public website is an interactive **static simulation**: fictional contacts, no backend database, no credentials, no WhatsApp messages and no network API calls. Edits remain in your browser memory and reset on refresh. Do **not** upload real contact data to a public demo. The separate Python MVP below is **localhost-only** and has **no authentication**.
+
+## ✨ Product tour
+
+#### 01 — Command center
+A quiet navy/cyan workspace for managing account placeholders, verified consent, and draft activity.
+
+![Nabu Reach — actual browser screenshot of the overview](docs/assets/desktop-overview.png)
+
+#### 02 — Message studio
+Preview personalized messages against fictional, opted-in recipients. There is intentionally **no Send button**.
+
+![Nabu Reach — actual browser screenshot of the campaign composer](docs/assets/desktop-campaigns.png)
+
+#### 03 — Responsive by default
+Built for comfortable operation on desktop and compact screens.
+
+<p align="center"><img src="docs/assets/mobile-overview.png" width="340" alt="Nabu Reach mobile overview screenshot"></p>
+
+## What you can use today
+
+| Feature | Local MVP | Live static demo |
+| :-- | :--: | :--: |
+| Dark, responsive dashboard | ✅ | ✅ |
+| Multiple account records | ✅ | ✅ Simulated |
+| CSV contact import + opt-in evidence | ✅ SQLite | ✅ Browser memory |
+| Persistent opt-out suppression on re-import | ✅ | ✅ Within session |
+| Personalization with `{{name}}` and `{{phone}}` | ✅ | ✅ |
+| Recipient preview and campaign drafts | ✅ | ✅ Simulated |
+| Meta Cloud API / GOWA / Evolution adapter | 🔜 Not connected | — |
+| Multi-tenant authorization and roles | 🔜 | — |
+| Actual WhatsApp campaign delivery | **Disabled** | **Impossible** |
+
+**Transparent status matters:** connecting an account placeholder is not the same as a connected WhatsApp Business number. A production-grade sending engine, authentication, compliance controls, and delivery tracking are future work.
 
 ## Quick start
 
-Requirements: Python 3.11+.
+Requirements: Python 3.11+ and no third-party Python packages.
 
 ```bash
-python -m reach.server
-# Open http://127.0.0.1:8787
-python -m unittest discover -s tests -v
+git clone https://github.com/NabuxAi/nabu-reach.git
+cd nabu-reach
+
+# Local developer workspace (do not make this publicly reachable)
+python3 -m reach.server
+# http://127.0.0.1:8787
 ```
 
-Optional local data path:
+Run the test suite:
 
 ```bash
-DB_PATH=/tmp/nabu-reach.sqlite3 python -m reach.server
+python3 -m unittest discover -s tests -v
+node --check reach/web/app.js
+node --check demo/mock.js
 ```
 
-Docker (binds to host loopback only):
+Prefer Docker for the local-only developer app?
 
 ```bash
 docker compose up --build
-# Open http://127.0.0.1:8787
+# Binds only to 127.0.0.1:8787
 ```
 
-The MVP **has no user authentication**. Never publish its port directly to the Internet, place it on a shared computer, or load real customer data until authentication, encryption, retention and privacy requirements have been implemented and reviewed.
+### Static demo — no backend, no database
 
-## Example CSV
+```bash
+python3 demo/build.py
+python3 -m http.server 8081 --directory dist/demo
+# http://127.0.0.1:8081
+```
+
+Or build the static-only image:
+
+```bash
+docker build -f demo/Dockerfile -t nabu-reach-demo .
+docker run --rm -p 127.0.0.1:8081:8080 nabu-reach-demo
+```
+
+Public demo deployments must serve the **static build only**, never the unauthenticated Python API. A sample Traefik/Coolify-network Compose file is available at [deploy/compose.demo.yaml](deploy/compose.demo.yaml); adjust its router labels for your environment.
+
+## Campaign workflow
+
+```mermaid
+flowchart LR
+    A[Account placeholder] --> B[Import CSV]
+    B --> C{Consent evidence?}
+    C -->|No or opted out| D[Suppress contact]
+    C -->|Yes| E[Compose draft]
+    E --> F[Personalized preview]
+    F --> G[Save draft]
+    G --> H[No live send in MVP]
+```
+
+Example consent ledger:
 
 ```csv
 phone,name,consent,consent_source,consent_at
-+15550100101,Example Person,yes,demo_signup_form,2026-01-01T12:00:00Z
++15550100101,Example Person,yes,website_signup,2026-01-01T12:00:00Z
 ```
 
-Demo phone numbers are fictitious; do not message them. `consent` supports `yes`/`no`, `true`/`false`, `1`/`0`, or `opt_in`/`opt_out`. Phone numbers must be E.164 with a leading `+`. Opt-in requires a timestamp with a timezone and the source of that consent. Duplicate phone numbers are updated except that existing opt-outs remain opted out. All content remains local in SQLite.
+Phone numbers use E.164 format, and opt-ins require a source plus timezone-aware timestamp. Imported opt-outs are preserved, including when a later file claims that a suppressed contact opted in again. Never upload real recipient data to the public demo or a GitHub issue.
 
-## API (localhost only)
+## Architecture
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| GET | `/healthz` | Draft-only health check |
-| GET | `/api/summary` | Workspace counts |
-| GET/POST | `/api/accounts` | Account placeholders |
-| GET | `/api/contacts` | Latest 200 ledger entries |
-| POST | `/api/contacts/import` | Raw `text/csv` import |
-| POST | `/api/contacts/opt-out` | Explicit opt-out by E.164 phone |
-| POST | `/api/campaigns/preview` | Consent-checked preview |
-| GET/POST | `/api/campaigns` | Save / list drafts |
+```mermaid
+flowchart TB
+  subgraph PublicDemo["Public demo — safely isolated"]
+    Browser[Browser-only UI] --> Mock[In-memory sample API]
+    Mock --> Fake[Fictional contacts and drafts]
+  end
+  subgraph LocalMVP["Local developer MVP — localhost only"]
+    UI[Vanilla HTML/CSS/JS] --> Server[Python standard-library HTTP API]
+    Server --> SQLite[(SQLite consent ledger and drafts)]
+    Server --> Disabled[No live send endpoints]
+  end
+  subgraph Future["Future — not implemented"]
+    Auth[Auth / RBAC / tenant isolation] --> Checks[Opt-in and template approval]
+    Checks --> Gateway[Official Meta Cloud API gateway]
+  end
+```
 
-Example:
+**We are not reinventing the messaging infrastructure.** The existing [NabuxAi/whatsapp-mcp](https://github.com/NabuxAi/whatsapp-mcp) project provides a separate gateway for official Meta WhatsApp Cloud API onboarding and MCP tools. The long-term plan is to integrate through a secured server-to-server boundary, not copy tokens or webhooks into this UI. Follow the [integration planning issue](https://github.com/NabuxAi/whatsapp-mcp/issues/1).
+
+## Safety and data privacy
+
+- **Opt-in first:** contacts must have a documented permission source and timestamp.
+- **Opt-out precedence:** CSV re-import must not re-subscribe a suppressed phone number.
+- **Preview-only by design:** neither demo nor MVP can send real messages.
+- **No evasion or spam:** no WhatsApp Web scraping, account rotation for bypassing bans, unsolicited bulk messaging, or rate-limit evasion.
+- **Public demo has no server data:** JavaScript fixtures are ephemeral and never transmitted to a backend.
+- **Local MVP is not a secure SaaS:** it lacks login, user isolation, encrypted SQLite storage, and a production retention/deletion process. Run on a trusted machine only.
+
+Read [Security notes](docs/SECURITY.md) before extending provider support. Unofficial GOWA and Evolution connectors require separate licensing, compatibility, security, and platform-policy review.
+
+## Free Core Forever
+
+The software core is [MIT-licensed](LICENSE). No mandatory subscription, credit card, or paid feature unlock is required for the local MVP or static demo.
+
+Third-party costs are separate and must be disclosed: your own server/domain, operations, and any optional **Meta WhatsApp Business Platform** messaging charges. Pricing depends on destination and Meta's current terms; consult the [official WhatsApp pricing documentation](https://developers.facebook.com/docs/whatsapp/pricing/) before a real deployment.
+
+## Roadmap
+
+- [x] Local Python MVP with accounts, CSV consent ledger, drafts and previews.
+- [x] Static interactive demo with sample data and no live endpoints.
+- [x] Responsive UI and real screenshot documentation.
+- [x] 15 Python unit/HTTP tests + JS syntax verification.
+- [ ] Authentication, RBAC, tenant isolation, encryption, backups and retention.
+- [ ] Secure opt-in / opt-out synchronization with the official gateway.
+- [ ] Approved templates, scheduling, compliant provider quotas, audit trail and delivery status.
+- [ ] Controlled, authorized Meta Cloud API integration after review.
+- [ ] Provider adapter security reviews, CI/e2e tests and accessibility audits.
+
+## Contribute
+
+Bug fixes, accessibility improvements, design polish, test cases, documentation, and secure integrations are welcome. Open an issue before major changes, and include reproduction steps and test evidence. No secret keys or real customer lists in public issues.
 
 ```bash
-curl -s http://127.0.0.1:8787/healthz
-curl -s -X POST http://127.0.0.1:8787/api/accounts \
-  -H 'Content-Type: application/json' -d '{"label":"Demo","provider":"mock"}'
-curl -s -X POST http://127.0.0.1:8787/api/contacts/import \
-  -H 'Content-Type: text/csv' --data-binary @examples/contacts.csv
-curl -s -X POST http://127.0.0.1:8787/api/campaigns/preview \
-  -H 'Content-Type: application/json' -d '{"message":"Hi {{name}}, thanks for opting in."}'
+python3 -m unittest discover -s tests -v
+python3 demo/build.py
+node --check demo/mock.js
 ```
 
-## Architecture and roadmap
-
-```text
-web UI ──> localhost HTTP API ──> SQLite (accounts, consent ledger, drafts, audit)
-                         └──> mock/official provider adapters (future; disabled)
-```
-
-**Existing related project:** [NabuxAi/whatsapp-mcp](https://github.com/NabuxAi/whatsapp-mcp) already offers multi-number management and official Meta WhatsApp Cloud API support. Nabu Reach should integrate via a secure server-to-server interface, **not** recreate that gateway.
-
-The official Meta Cloud API should be the preferred live integration after Meta authorization, security review, approved templates and account-level quotas. GOWA and Evolution may be evaluated as optional self-hosted adapters **only for permitted, opted-in messaging**; unofficial WhatsApp Web integrations can violate platform terms and result in account restrictions. This MVP does **not** implement account rotation, ban-risk optimization, unsolicited bulk messaging, contact scraping, or limit bypasses.
-
-Before a real deployment, implement: owner authentication & RBAC, CSRF defenses appropriate for login cookies, encrypted secrets, tenant isolation, provider authorization, approved-template validation, webhook verification, suppression list synchronization, opt-out keyword handling, bounded queues, per-provider legitimate rate limits, time-window controls, idempotency, observability, backups, privacy and retention controls, and independent security review.
-
-## Costs and licensing
-
-- **Software core:** MIT license, no mandatory card, subscription, or paid upgrade.
-- **Running locally:** no software or hosted service fee.
-- **Self-hosting:** infrastructure, domain, SSL and operational maintenance may cost money.
-- **Meta WhatsApp Business Platform:** message/template pricing and permissions depend on current Meta rules, geography and account status. No message cost occurs in this draft-only MVP.
-- **Unofficial adapters:** not included; their compatibility, licensing and operational risks require separate assessment.
-
-## Security
-
-Read [docs/SECURITY.md](docs/SECURITY.md). Do not upload private customer phone lists to public repositories.
-
-## Try the public interactive demo
-
-**[Launch Nabu Reach demo](https://reach.nabuxai.com)** — a browser-only simulation with fictional sample contacts. It never connects to WhatsApp, never sends messages, and does not persist imported data to a server.
-
-![Nabu Reach dashboard — real screenshot](docs/assets/desktop-overview.png)
-
-The hosted demo and local-first MVP have different trust boundaries:
-
-| | Public interactive demo | Local-first MVP |
-|---|---|---|
-| Storage | Browser memory, reset on reload | Local SQLite |
-| API/backend | None | Python HTTP on localhost |
-| WhatsApp sending | Disabled | Disabled |
-| Authentication | Not needed for synthetic data | Not implemented; localhost only |
-| Real contact data | **Never import** | Only on a trusted local machine |
-
-To build the static demo: `python3 demo/build.py`. Serve `dist/demo` using a static server. A hardened read-only Nginx container is available at `demo/Dockerfile`, and an example reverse-proxy Compose definition is at `deploy/compose.demo.yaml`. The demo blocks network connections with a strict Content Security Policy. Its CSV parser is intentionally simplified for synthetic demo records; use the local MVP for stricter import validation.
-
-## Community
-
-Found a consent, privacy or reliability issue? Open an issue with a minimal reproducible example and no personal data. Contributions are welcome with tests. No mandatory subscription, card or paid API is required for the core.
+Made by the **NabuXAI** community. [MIT License](LICENSE). Built to keep the core free.

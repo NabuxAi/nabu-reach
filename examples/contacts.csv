@@ -1,0 +1,3 @@
+phone,name,consent,consent_source,consent_at
++15550100101,Example Person,yes,demo_signup_form,2026-01-01T12:00:00Z
++15550100102,Opted Out Example,no,,

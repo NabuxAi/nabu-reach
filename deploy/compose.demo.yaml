@@ -1,0 +1,30 @@
+# Production-facing host serves ONLY a static, browser-memory mock UI.
+# Check the reverse proxy network and TLS resolver on your own server before use.
+services:
+  reach-demo:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile
+    container_name: nabu-reach-demo
+    image: nabu-reach-demo:local
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.nabu-reach-demo.rule=Host(`reach.nabuxai.com`)"
+      - "traefik.http.routers.nabu-reach-demo.entrypoints=https"
+      - "traefik.http.routers.nabu-reach-demo.tls=true"
+      - "traefik.http.routers.nabu-reach-demo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nabu-reach-demo.loadbalancer.server.port=8080"
+networks:
+  coolify:
+    external: true

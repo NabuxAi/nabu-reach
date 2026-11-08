@@ -21,6 +21,51 @@
   const approved = () => contacts.filter(c=>c.consent_status==='opt_in');
   const parseBody = data => { try {return JSON.parse(data||'{}')} catch(e) {return error('Invalid JSON')} };
   const validatePhone = p => /^\+[1-9]\d{7,14}$/.test(p||'');
+  // RFC 4180-style fields: commas, escaped quotes and embedded newlines.
+  const parseCsv = input => {
+    const rows = [];
+    let cells = [], value = '', quoted = false, closed = false, atStart = true;
+    let line = 1, rowLine = 1;
+    const text = input.replace(/^\uFEFF/, '');
+    const finish = () => {
+      cells.push(value);
+      if (cells.some(cell => cell !== '')) rows.push({cells, line: rowLine});
+      cells = []; value = ''; closed = false; atStart = true;
+      rowLine = line + 1;
+    };
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quoted) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { value += '"'; i++; }
+          else { quoted = false; closed = true; }
+        } else if (ch === '\r') {
+          if (text[i + 1] === '\n') i++;
+          value += '\n'; line++;
+        } else {
+          value += ch;
+          if (ch === '\n') line++;
+        }
+      } else if (ch === ',') {
+        cells.push(value); value = ''; closed = false; atStart = true;
+      } else if (ch === '\r' || ch === '\n') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        finish(); line++;
+      } else if (ch === '"' && atStart) {
+        quoted = true; atStart = false;
+      } else if (ch === '"' || closed) {
+        return error('Malformed CSV quote');
+      } else {
+        value += ch; atStart = false;
+      }
+    }
+    if (quoted) return error('Unclosed CSV quote');
+    if (value !== '' || cells.length || closed) {
+      cells.push(value);
+      if (cells.some(cell => cell !== '')) rows.push({cells, line: rowLine});
+    }
+    return rows;
+  };
   window.reachDemoApi = async (route, options={}) => {
     const method=(options.method||'GET').toUpperCase();
     if(method==='GET') {
@@ -39,25 +84,31 @@
     if(route==='/api/contacts/import') {
       const input=typeof options.body==='string'?options.body:new TextDecoder().decode(options.body);
       if(input.length>512*1024)return error('Demo CSV too large (512 KiB maximum)');
-      const rows=input.replace(/\r/g,'').trim().split('\n').map(r=>r.split(','));
+      const rows=parseCsv(input);
       if(rows.length<2 || rows.length>1001)return error('Provide 1 to 1000 CSV contacts');
-      const columns=rows.shift().map(x=>x.trim().toLowerCase());
+      const columns=rows.shift().cells.map(x=>x.trim().toLowerCase());
+      if(new Set(columns).size!==columns.length)return error('Duplicate CSV columns');
       for(const column of ['phone','name','consent','consent_source','consent_at'])
         if(!columns.includes(column))return error('Missing column: '+column);
       let imported=0;const errors=[];
-      rows.forEach((cells,i)=>{
+      rows.forEach(({cells,line})=>{
+        if(cells.length!==columns.length){
+          errors.push({row:line,reason:'Incorrect column count'});return;
+        }
         const c=Object.fromEntries(columns.map((key,j)=>[key,(cells[j]||'').trim()]));
         const optIn=['yes','true','1','opt_in'].includes((c.consent||'').toLowerCase());
         const optOut=['no','false','0','opt_out'].includes((c.consent||'').toLowerCase());
         if(!validatePhone(c.phone)||(!optIn&&!optOut)) {
-          errors.push({row:i+2,reason:'Invalid phone or consent value'});return;
+          errors.push({row:line,reason:'Invalid phone or consent value'});return;
         }
-        if(optIn&&(!c.consent_source||!c.consent_at||!Number.isFinite(Date.parse(c.consent_at))||Date.parse(c.consent_at)>Date.now())) {
-          errors.push({row:i+2,reason:'Missing or invalid consent evidence'});return;
+        if(optIn&&(!c.consent_source||!c.consent_at||
+          !/(?:Z|[+-]\d{2}:\d{2})$/i.test(c.consent_at)||
+          !Number.isFinite(Date.parse(c.consent_at))||Date.parse(c.consent_at)>Date.now())) {
+          errors.push({row:line,reason:'Missing or invalid consent evidence'});return;
         }
         const prev=contacts.find(x=>x.phone===c.phone);
         if(prev&&prev.consent_status==='opt_out'&&optIn){
-          errors.push({row:i+2,reason:'Existing opt-out cannot be reversed'});return;
+          errors.push({row:line,reason:'Existing opt-out cannot be reversed'});return;
         }
         const entry={phone:c.phone,name:c.name,consent_source:c.consent_source||'opt_out',
           consent_at:c.consent_at||new Date().toISOString(),

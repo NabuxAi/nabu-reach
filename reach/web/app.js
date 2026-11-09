@@ -12,7 +12,7 @@ function toast(message){const x=$('toast');x.textContent=message;x.classList.add
 function switchTab(tab){
   document.querySelectorAll('[data-panel]').forEach(e=>e.classList.toggle('active',e.dataset.panel===tab));
   document.querySelectorAll('[data-tab]').forEach(e=>e.classList.toggle('active',e.dataset.tab===tab));
-  $('currentTab').textContent=tab[0].toUpperCase()+tab.slice(1);location.hash=tab;
+  $('currentTab').textContent=tab[0].toUpperCase()+tab.slice(1);document.querySelector('.intro').hidden=tab==='integrations';location.hash=tab;
   refresh();
   if(tab==="campaigns" && typeof window.reachDemoApi==="function") {
     setTimeout(()=>$("previewBtn").click(),250); // simulated opt-in previews only
@@ -40,5 +40,55 @@ $('campaignForm').addEventListener('submit',async e=>{e.preventDefault();try{con
 // Generate a local example download without transmitting any contact data.
 const example='phone,name,consent,consent_source,consent_at\n+15550100101,Example Person,yes,demo_signup_form,2026-01-01T12:00:00Z\n';
 const sampleURL=URL.createObjectURL(new Blob([example],{type:'text/csv'}));$('sampleInfo').href=sampleURL;
-window.addEventListener('hashchange',()=>{const tab=location.hash.slice(1);if(['overview','contacts','accounts','campaigns'].includes(tab))switchTab(tab)});
-const initial=location.hash.slice(1);switchTab(['overview','contacts','accounts','campaigns'].includes(initial)?initial:'overview');
+window.addEventListener('hashchange',()=>{const tab=location.hash.slice(1);if(['overview','contacts','accounts','integrations','campaigns'].includes(tab))switchTab(tab)});
+const initial=location.hash.slice(1);switchTab(['overview','contacts','accounts','integrations','campaigns'].includes(initial)?initial:'overview');
+
+// Connection choices are intentionally informational; no QR pairing, tokens or network calls.
+const integrationModal=$('integrationModal');
+let integrationReturnFocus=null;
+function closeIntegration(){
+  if(integrationModal.hidden)return;
+  integrationModal.hidden=true;
+  document.body.classList.remove('wa-modal-open');
+  if(integrationReturnFocus && integrationReturnFocus.isConnected)integrationReturnFocus.focus();
+}
+function openIntegration(method,trigger){
+  if(!['qr','coexistence','waba'].includes(method))return;
+  integrationReturnFocus=trigger;
+  const titles={qr:'QR linking',coexistence:'Coexistence',waba:'WABA / Cloud API'};
+  $('integrationDialogTitle').textContent=titles[method];
+  integrationModal.querySelectorAll('[data-integration-detail]').forEach(detail=>{
+    detail.hidden=detail.dataset.integrationDetail!==method;
+  });
+  integrationModal.hidden=false;
+  document.body.classList.add('wa-modal-open');
+  integrationModal.querySelector('[data-integration-close]').focus();
+}
+document.querySelectorAll('[data-integration-method]').forEach(button=>
+  button.addEventListener('click',()=>openIntegration(button.dataset.integrationMethod,button))
+);
+document.querySelectorAll('[data-integration-close]').forEach(button=>
+  button.addEventListener('click',closeIntegration)
+);
+integrationModal.addEventListener('click',event=>{
+  if(event.target===integrationModal)closeIntegration();
+});
+document.addEventListener('keydown',event=>{
+  if(integrationModal.hidden)return;
+  if(event.key==='Escape'){event.preventDefault();closeIntegration();return;}
+  if(event.key==='Tab'){
+    const focusables=[...integrationModal.querySelectorAll('button:not([hidden]),a[href]')]
+      .filter(element=>!element.closest('[hidden]'));
+    if(!focusables.length)return;
+    const first=focusables[0],last=focusables[focusables.length-1];
+    if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
+  }
+});
+document.querySelector('[data-integration-forward]').addEventListener('click',()=>{
+  closeIntegration();
+  $('accountProvider').value='meta_cloud';
+  switchTab('accounts');
+  $('accountLabel').focus();
+  toast('Official API setup placeholder only. No WhatsApp connection or message sending.');
+});

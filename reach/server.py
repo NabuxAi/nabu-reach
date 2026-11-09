@@ -96,6 +96,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def make_server(host="127.0.0.1", port=8787, db_path="data/reach.sqlite3"):
+    if host not in {"127.0.0.1", "localhost", "::1"}:
+        raise ValueError("Unauthenticated Nabu Reach MVP must bind to loopback only")
     server = ThreadingHTTPServer((host, port), Handler)
     server.store = Store(db_path)
     return server
@@ -105,8 +107,6 @@ def main():
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8787"))
     db = os.environ.get("DB_PATH", "data/reach.sqlite3")
-    if host not in {"127.0.0.1", "localhost", "::1"}:
-        print("WARNING: no authentication is built in. Bind the published Docker port to localhost only.")
     server = make_server(host, port, db)
     print(f"Nabu Reach MVP (draft-only) on http://{host}:{port}")
     try:

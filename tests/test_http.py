@@ -27,6 +27,10 @@ class ReachHttpTests(unittest.TestCase):
         r=c.getresponse();data=r.read();code=r.status;h=dict(r.getheaders());c.close()
         return code,data,h
 
+    def test_non_loopback_binding_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'loopback only'):
+            make_server('0.0.0.0', 0, str(Path(self.tmp.name) / 'unsafe.sqlite'))
+
     def test_home_and_health(self):
         status,body,headers=self.request('GET','/')
         self.assertEqual(status,200)

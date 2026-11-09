@@ -5,7 +5,7 @@
   <aside class="sidebar">
     <div class="brand"><span class="mark">◢</span><span>NABU <b>REACH</b></span></div>
     <div class="subbrand">CAMPAIGN STUDIO <span class="free">FREE CORE</span></div>
-    <nav aria-label="Main navigation"><button data-tab="overview" class="nav-link active"><span>◫</span> Overview</button><button data-tab="contacts" class="nav-link"><span>♧</span> Contacts</button><button data-tab="accounts" class="nav-link"><span>▣</span> Accounts</button><button data-tab="campaigns" class="nav-link"><span>◈</span> Campaigns</button></nav>
+    <nav aria-label="Main navigation"><button data-tab="overview" class="nav-link active"><span>◫</span> Overview</button><button data-tab="contacts" class="nav-link"><span>♧</span> Contacts</button><button data-tab="accounts" class="nav-link"><span>▣</span> Accounts</button><button data-tab="integrations" class="nav-link"><span>⌁</span> Integrations</button><button data-tab="campaigns" class="nav-link"><span>◈</span> Campaigns</button></nav>
     <div class="sidebar-bottom"><div class="status-light"></div><div><b>Draft-only mode</b><small>No real messages are sent</small></div></div>
   </aside>
   <main class="main">
@@ -19,6 +19,112 @@
       </section>
       <section data-panel="contacts" class="panel"><div class="section-header"><div><span class="eyebrow">AUDIENCE MANAGEMENT</span><h2>Contacts & consent</h2><p>Import only recipients who provided documented opt-in. Opt-outs cannot be overwritten by CSV.</p></div><span class="chip">CSV • 1,000 rows max</span></div><article class="glass importer"><div class="upload-icon">⇧</div><h3>Import your CSV</h3><p>Required columns: <code>phone,name,consent,consent_source,consent_at</code></p><label class="primary file-cta" for="csvFile">Choose CSV file <span>↗</span></label><input type="file" id="csvFile" accept=".csv,text/csv" hidden><small>UTF-8 · 512 KiB max · E.164 phone numbers</small><a download="contacts-example.csv" href="/example" id="sampleInfo" class="muted-link">Download example CSV</a></article><div id="importResult" role="status" aria-live="polite" class="inline-result" hidden></div><article class="glass simple"><h3>Respect an opt-out</h3><form id="optoutForm"><label>Contact phone number<input id="optoutPhone" required placeholder="+15550100101" type="tel"></label><button class="secondary" type="submit">Mark as opted out</button></form></article><article class="glass simple lower"><h3>Consent ledger <span id="contactsCount" class="count"></span></h3><div id="contactsList" class="list"></div></article></section>
       <section data-panel="accounts" class="panel"><div class="section-header"><div><span class="eyebrow">MULTI-ACCOUNT WORKSPACE</span><h2>Provider accounts</h2><p>All integrations are placeholders except the mock. No credentials are collected in this MVP.</p></div><span class="chip">Adapter-ready</span></div><div class="split"><article class="glass simple"><h3>Register an account</h3><form id="accountForm"><label>Display name<input id="accountLabel" name="label" required maxlength="80" placeholder="e.g. Main customer support"></label><label>Provider<select id="accountProvider" name="provider"><option value="mock">Mock provider · ready</option><option value="meta_cloud">Meta Cloud API · pending integration</option><option value="gowa">GOWA · unofficial / pending</option><option value="evolution">Evolution API · pending validation</option></select></label><button class="primary" type="submit">Save account placeholder <span>+</span></button></form><div class="note">Only your official API gateway should send live messages after safeguards and security review.</div></article><article class="glass simple"><h3>Registered accounts</h3><div id="accountsList" class="list"></div></article></div></section>
+      <section data-panel="integrations" class="panel wa-panel" aria-label="WhatsApp integration options">
+        <div class="wa-banner">
+          <div class="wa-banner-meta"><span class="wa-kicker">CONNECTION CENTER / WHATSAPP</span><span class="wa-banner-status"><span class="wa-status-dot"></span> Preview only · No live pairing</span></div>
+          <h2>WhatsApp <span>Integration.</span></h2>
+          <p>Find the right connection path for your business. Compare setup, capabilities and trade-offs before you connect.</p>
+          <div class="wa-banner-foot"><span>◈ Provider-aware setup</span><span>◇ Consent-first workflows</span><span>◎ Free Core Forever</span></div>
+        </div>
+        <div class="wa-grid">
+          <article class="wa-option wa-option-qr" aria-labelledby="waQrTitle">
+            <div class="wa-card-head">
+              <div class="wa-method-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><rect x="10" y="2.5" width="12" height="27" rx="3" stroke="currentColor" stroke-width="2"/><path d="M14 7h4M14 25h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="12.5" y="11" width="3" height="3" rx=".4" fill="currentColor"/><rect x="17" y="11" width="3" height="3" rx=".4" fill="currentColor"/><rect x="12.5" y="16" width="3" height="3" rx=".4" fill="currentColor"/></svg></div>
+              <span class="wa-method-status wa-status-risk">UNOFFICIAL PATH</span>
+            </div>
+            <h3 id="waQrTitle">QR linking</h3>
+            <p class="wa-desc">Device-linked access through a QR session, where supported by a separately reviewed connector.</p>
+            <div class="wa-card-rule"></div>
+            <h4 class="wa-list-title wa-positive">Potential advantages</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-good">No new business number may be needed</li>
+              <li class="wa-good">Can work alongside the phone app</li>
+              <li class="wa-good">May preserve existing chat context</li>
+            </ul>
+            <h4 class="wa-list-title wa-negative">Important limitations</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-caution">Not the official Meta Cloud API</li>
+              <li class="wa-caution">Session stability and policy risks</li>
+            </ul>
+            <div class="wa-card-spacer"></div>
+            <button type="button" class="wa-cta wa-cta-risk" data-integration-method="qr">Review QR risks <span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="wa-option wa-option-coexistence" aria-labelledby="waCoTitle">
+            <div class="wa-card-head">
+              <div class="wa-method-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="m16 3 10 4v8c0 7-4 11-10 14C10 26 6 22 6 15V7l10-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M11 16c1-2 3-3 5-3h6m-3-3 3 3-3 3M21 19c-1 2-3 3-5 3h-6m3-3-3 3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="wa-method-status wa-status-review">ELIGIBILITY REQUIRED</span>
+            </div>
+            <h3 id="waCoTitle">Coexistence</h3>
+            <p class="wa-desc">Use an eligible WhatsApp Business App number with the official Business Platform.</p>
+            <div class="wa-card-rule"></div>
+            <h4 class="wa-list-title wa-positive">Potential advantages</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-good">Eligible businesses may keep their number</li>
+              <li class="wa-good">Official onboarding route</li>
+              <li class="wa-good">App and API use can coexist</li>
+            </ul>
+            <h4 class="wa-list-title wa-negative">Important limitations</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-caution">Eligibility varies by business</li>
+              <li class="wa-caution">Some app features may change</li>
+            </ul>
+            <div class="wa-card-spacer"></div>
+            <button type="button" class="wa-cta wa-cta-outline" data-integration-method="coexistence">Check requirements <span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="wa-option wa-option-waba" aria-labelledby="waWabaTitle">
+            <div class="wa-card-head">
+              <div class="wa-method-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M6 28V7l10-4 10 4v21H6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 11v3m8-3v3m-8 5v3m8-3v3M4 28h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 28v-3h4v3" stroke="currentColor" stroke-width="2"/></svg></div>
+              <span class="wa-method-status wa-status-official">RECOMMENDED</span>
+            </div>
+            <h3 id="waWabaTitle">WABA / Cloud API</h3>
+            <p class="wa-desc">The official WhatsApp Business Platform for approved business communications.</p>
+            <div class="wa-card-rule"></div>
+            <h4 class="wa-list-title wa-positive">Advantages</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-good">Official Meta platform and webhooks</li>
+              <li class="wa-good">Approved message templates</li>
+              <li class="wa-good">Compliance and delivery reporting</li>
+            </ul>
+            <h4 class="wa-list-title wa-negative">Requirements & costs</h4>
+            <ul class="wa-feature-list">
+              <li class="wa-caution">Business setup and review may apply</li>
+              <li class="wa-caution">Meta messaging fees may apply</li>
+            </ul>
+            <div class="wa-card-spacer"></div>
+            <button type="button" class="wa-cta wa-cta-official" data-integration-method="waba">Set up WABA <span aria-hidden="true">↗</span></button>
+          </article>
+        </div>
+        <div class="wa-bottom-note">
+          <span class="wa-bottom-symbol" aria-hidden="true">✦</span>
+          <div><strong>Choose a connection, not a promise.</strong><p>No setup guarantees an account badge or freedom from enforcement. Approved messaging, documented opt-in and provider limits still apply. This MVP cannot pair an account or send live messages.</p></div>
+          <span class="wa-bottom-tag">SAFE BY DESIGN</span>
+        </div>
+      </section>
+      <div id="integrationModal" class="wa-modal-backdrop" hidden>
+        <div class="wa-dialog" role="dialog" aria-modal="true" aria-labelledby="integrationDialogTitle" tabindex="-1">
+          <button type="button" class="wa-close" data-integration-close aria-label="Close integration details">×</button>
+          <span class="wa-kicker">NABU REACH / CONNECTION GUIDE</span>
+          <h2 id="integrationDialogTitle">Connection guide</h2>
+          <div data-integration-detail="qr" hidden>
+            <div class="wa-dialog-status wa-dialog-alert">Unofficial · Not enabled in this release</div>
+            <p>QR-based device sessions are different from Meta's official API. They can disconnect, impose feature restrictions or violate platform terms, depending on the connector.</p>
+            <div class="wa-dialog-list"><p><b>1.</b> Review the provider's licensing and platform-policy compliance.</p><p><b>2.</b> Assess account privacy, session storage and operational risk.</p><p><b>3.</b> Use the official WABA route for production outreach.</p></div>
+            <div class="wa-dialog-footer"><button class="wa-cta wa-cta-outline" type="button" data-integration-close>Understood</button></div>
+          </div>
+          <div data-integration-detail="coexistence" hidden>
+            <div class="wa-dialog-status wa-dialog-info">Official route · Eligibility must be verified</div>
+            <p>Meta's Business App coexistence can allow eligible businesses to use a number with the Business Platform while retaining compatible app usage. Availability, app behavior and onboarding requirements vary.</p>
+            <div class="wa-dialog-list"><p><b>1.</b> Verify business and phone-number eligibility in Meta's official onboarding flow.</p><p><b>2.</b> Review supported app features, permissions and messaging costs.</p><p><b>3.</b> Complete approved onboarding through the official gateway once enabled.</p></div>
+            <div class="wa-dialog-footer"><a class="wa-doc-link" href="https://developers.facebook.com/docs/whatsapp/" target="_blank" rel="noopener noreferrer">Meta documentation ↗</a><button class="wa-cta wa-cta-outline" type="button" data-integration-close>Close</button></div>
+          </div>
+          <div data-integration-detail="waba" hidden>
+            <div class="wa-dialog-status wa-dialog-ok">Official Meta Cloud API · Recommended for production</div>
+            <p>This preview can register a <strong>Meta Cloud API placeholder</strong>, not connect a real account. Production onboarding will use the existing Nabu WhatsApp MCP gateway after authentication, consent checks and security review.</p>
+            <div class="wa-dialog-list"><p><b>1.</b> Prepare Meta business details and an eligible phone number.</p><p><b>2.</b> Complete Meta's official business onboarding and permissions.</p><p><b>3.</b> Verify consent, approved templates, rates and applicable fees.</p></div>
+            <div class="wa-dialog-footer"><a class="wa-doc-link" href="https://developers.facebook.com/docs/whatsapp/" target="_blank" rel="noopener noreferrer">Official setup guide ↗</a><button class="wa-cta wa-cta-official" type="button" data-integration-forward>Save setup placeholder <span aria-hidden="true">↗</span></button></div>
+          </div>
+        </div>
+      </div>
       <section data-panel="campaigns" class="panel"><div class="section-header"><div><span class="eyebrow">CAMPAIGN COMPOSER</span><h2>Message studio</h2><p>Compose a draft, validate consent eligibility, and inspect the first five personalized previews.</p></div><span class="chip">DRY RUN ONLY</span></div><div class="split"><article class="glass simple"><h3>New campaign</h3><form id="campaignForm"><label>Campaign name<input id="campaignName" required maxlength="120" placeholder="e.g. November product update"></label><label>Account<select id="campaignAccount" required></select></label><label>Message<textarea id="campaignMessage" rows="6" maxlength="2048" required placeholder="Hi {{name}}, thanks for your interest. Reply STOP to opt out.">Hello {{name}}, here is an update you requested. Reply STOP to opt out.</textarea></label><small>Available placeholders: <code>{{name}}</code> and <code>{{phone}}</code>.</small><div class="actions"><button class="secondary" type="button" id="previewBtn">Preview recipients</button><button class="primary" type="submit">Save draft <span>↗</span></button></div></form></article><article class="glass simple"><h3>Preview <span class="chip">No sending</span></h3><div id="previewResults" class="preview-placeholder">Select “Preview recipients” to inspect opted-in recipients and personalized messages.</div></article></div><article class="glass simple lower"><h3>Saved drafts</h3><div id="draftList" class="list"></div></article></section>
       <footer><span>NABU REACH / OPEN CORE</span><span>Local-first MVP · No live WhatsApp sending</span></footer>
     </div>

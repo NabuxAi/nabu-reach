@@ -40,6 +40,7 @@ Built for comfortable operation on desktop and compact screens.
 | :-- | :--: | :--: |
 | Dark, responsive dashboard | ✅ | ✅ |
 | Multiple account records | ✅ | ✅ Simulated |
+| Three-path WhatsApp connection guide (QR, Coexistence, WABA) | ✅ UI-only | ✅ UI-only · no pairing |
 | CSV contact import + opt-in evidence | ✅ SQLite | ✅ Browser memory |
 | Persistent opt-out suppression on re-import | ✅ | ✅ Within session |
 | Personalization with `{{name}}` and `{{phone}}` | ✅ | ✅ |

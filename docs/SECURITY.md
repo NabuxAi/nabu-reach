@@ -10,4 +10,4 @@ Not implemented: users, authentication, authorization, tenant isolation, login s
 
 Do not use this application to bypass WhatsApp restrictions, automate unsolicited outreach, evade bans, or rotate accounts to avoid enforcement. Production marketing must use the sender's authorized service and documented recipient consent.
 
-Report security issues privately to the maintainer through GitHub Security Advisories if the repository is made public. Never include actual phone numbers or credentials in public bug reports.
+Report security vulnerabilities through GitHub's private vulnerability reporting (Security Advisories) for this public repository, when that feature is enabled. If private reporting is unavailable, open a minimal public issue asking the maintainers for a private reporting channel; do not include exploit details that could expose an unpatched vulnerability, credentials, tokens, real phone numbers, or customer data.
